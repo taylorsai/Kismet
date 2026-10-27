@@ -10,3 +10,24 @@
 .app.focused .related-head,.app.focused .path-strip{width:100%}
 .app.focused .path-strip{overscroll-behavior-x:contain}
 @media(max-width:390px){.app.focused .details{padding-left:0;padding-right:0}}
+
+/* Kismet 0.3.3 — focused view alignment */
+.app.focused .focus-main{
+  width:100%;
+  max-width:980px;
+}
+.app.focused .art-stage,
+.app.focused .details{
+  width:100%;
+  max-width:650px;
+  margin-left:auto;
+  margin-right:auto;
+}
+.app.focused .art-stage{min-width:0}
+.app.focused .art-button{width:100%;max-width:none}
+.app.focused .details{box-sizing:border-box;padding-left:0;padding-right:0}
+.app.focused .title-row,
+.app.focused .actions,
+.app.focused .related-head,
+.app.focused .path-strip{width:100%}
+.app.focused .title-row h1{overflow-wrap:anywhere}
