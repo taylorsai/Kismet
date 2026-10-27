@@ -1,0 +1,25 @@
+Kismet 0.4 — channel carousels + monochrome light mode
+
+Replace in GitHub VS Code:
+  src/main.jsx
+  src/style.css
+
+Add:
+  api/channel.js
+
+Keep:
+  api/discover.js (do not change)
+
+After committing, verify Vercel's latest deployment is assigned to Production.
+
+Controls:
+  Swipe up/down: next/previous random discovery.
+  Swipe left/right: next/previous block in the current Are.na channel.
+  Sun/moon icon: switch dark/light mode; preference is saved locally.
+  New Path: fresh random path.
+
+The channel lookup runs after a brief delay, separately from the random feed. A channel
+may be unavailable for some blocks; the vertical feed should continue unaffected.
+The dots show when a channel with additional accessible blocks is loaded.
+
+This package has been syntax-checked, but not tested against your live Are.na API or iPhone.
