@@ -31,3 +31,8 @@
 .app.focused .related-head,
 .app.focused .path-strip{width:100%}
 .app.focused .title-row h1{overflow-wrap:anywhere}
+
+/* 0.3.4: content follows actual displayed image width, not the image frame */
+.app.focused .details{width:100%;padding-left:0!important;padding-right:0!important;align-self:center}
+.app.focused .title-row,.app.focused .actions,.app.focused .related-head,.app.focused .path-strip{box-sizing:border-box;width:100%}
+.app.focused .art-button,.app.immersive .immersive-art{touch-action:none}
