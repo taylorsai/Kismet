@@ -36,3 +36,33 @@
 .app.focused .details{width:100%;padding-left:0!important;padding-right:0!important;align-self:center}
 .app.focused .title-row,.app.focused .actions,.app.focused .related-head,.app.focused .path-strip{box-sizing:border-box;width:100%}
 .app.focused .art-button,.app.immersive .immersive-art{touch-action:none}
+
+/* Kismet 0.4 — monochrome light mode; keep DM Mono typography unchanged */
+.app.theme-light{--lime:#111;background:#fff;color:#111}
+.theme-light .site-header,.theme-light .backline,.theme-light .focus-main,.theme-light .focus-footer{background:#fff;color:#111}
+.theme-light .wordmark span{color:#111}
+.theme-light .status,.theme-light .title-row p,.theme-light .related-head span{color:#666}
+.theme-light .related-head{border-color:#ddd;color:#111}
+.theme-light .thumb{background:#f1f1f1;color:#333}
+.theme-light .thumb.selected{border-color:#111}
+.theme-light .text-art{background:#f5f5f5;color:#111}
+.theme-light .immersive-main{background:#fff;color:#111}
+.theme-light .immersive-art .text-art{background:#f5f5f5;color:#111}
+.theme-light .immersive-art:after{background:linear-gradient(180deg,#fff9 0%,transparent 25%,transparent 65%,#fff9 100%)}
+.theme-light .immersive-actions button,.theme-light .immersive-actions a{color:#111}
+.theme-light .immersive-caption p{color:#555}
+.theme-light .drawer{background:#fff;color:#111;border-color:#ddd}
+.theme-light .drawer p{color:#333}
+.theme-light .drawer-note{color:#666!important}
+.theme-light .saved-card{background:#eee}
+.theme-light .notice,.theme-light .loading{background:#f5f5f5;color:#111;border-color:#ddd}
+.theme-light .saved-card button{background:#fff;color:#111}
+.theme-light .immersive-top .bare{color:#111}
+.immersive-header-actions{display:flex;align-items:center;gap:14px}
+/* Small, translucent channel dots, only after a real channel is available */
+.stack-dots{height:13px;display:flex;align-items:center;justify-content:center;gap:5px;flex:0 0 13px;color:#83917d;font-size:9px}
+.stack-dots i{display:block;width:5px;height:5px;border-radius:50%;background:#929c91;opacity:.38}
+.stack-dots i.on{width:6px;height:6px;background:var(--lime);opacity:1}
+.immersive-dots{position:absolute;z-index:4;left:0;right:0;bottom:calc(110px + env(safe-area-inset-bottom,0px));pointer-events:none}
+.theme-light .stack-dots i{background:#888}
+.theme-light .stack-dots i.on{background:#111}
