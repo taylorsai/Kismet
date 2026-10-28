@@ -77,3 +77,16 @@
 .article-text-link{display:inline-flex;align-items:center;gap:5px;color:var(--lime);font-size:11px;margin-top:12px}
 .theme-light .article-text-link{color:#111}
 .app.focused .art-button{cursor:default}
+/* Kismet 0.6: quiet discovery controls */
+.filter-panel{display:flex;flex-direction:column;gap:14px;padding-bottom:28px}
+.filter-panel>p:first-child{margin:0 0 4px}
+.filter-panel label{font-size:10px;letter-spacing:.13em;opacity:.65;margin-top:10px}
+.filter-chips{display:flex;gap:7px;flex-wrap:wrap}
+.filter-chips button{border:1px solid currentColor;background:transparent;color:inherit;border-radius:3px;padding:8px 10px;font:inherit;font-size:11px;opacity:.7;cursor:pointer}
+.filter-chips button.selected{background:currentColor;opacity:1;filter:invert(0)}
+.filter-chips button.selected{background:#b8ef69;color:#111;border-color:#b8ef69}
+.theme-light .filter-chips button.selected{background:#111;color:#fff;border-color:#111}
+.filter-input{box-sizing:border-box;width:100%;padding:13px 12px;background:transparent;color:inherit;border:1px solid currentColor;border-radius:3px;font:inherit;font-size:12px}
+.filter-apply{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border:0;background:#b8ef69;color:#111;font:inherit;cursor:pointer}
+.theme-light .filter-apply{background:#111;color:#fff}
+.filter-clear{align-self:center;border:0;background:transparent;color:inherit;font:inherit;font-size:11px;opacity:.7;cursor:pointer}
