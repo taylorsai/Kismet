@@ -90,3 +90,6 @@
 .filter-apply{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border:0;background:#b8ef69;color:#111;font:inherit;cursor:pointer}
 .theme-light .filter-apply{background:#111;color:#fff}
 .filter-clear{align-self:center;border:0;background:transparent;color:inherit;font:inherit;font-size:11px;opacity:.7;cursor:pointer}
+
+/* wren 0.7 — grouped discovery subjects */
+.topic-group{margin-top:17px}.topic-group-label{font-size:10px;letter-spacing:.13em;text-transform:uppercase;opacity:.55;margin:0 0 9px}.topic-group .filter-chips{margin-bottom:0}

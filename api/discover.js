@@ -1,7 +1,8 @@
-// Kismet 0.6 — filtered random discovery. ARENA_API_TOKEN stays server-side.
+// wren 0.7 — filtered random discovery. ARENA_API_TOKEN stays server-side.
 const API='https://api.are.na/v3/search';
 const FORMATS=new Set(['all','images','gifs','videos','articles']);
-const TOPICS=new Set(['','design','art','memes','engineering','architecture','fashion','technology','music','animation','photography','nsfw']);
+const TOPICS=new Set(['','art','design','illustration','typography','graphic-design','photography','animation','music','fashion','film','anime','memes','internet-culture','architecture','interiors','nature','objects','engineering','technology','surreal','experimental','nostalgia','web-art','archives','oddities','nsfw']);
+const TOPIC_TERMS={'graphic-design':'graphic design','internet-culture':'internet culture','web-art':'web art',nsfw:'erotic art'};
 export default async function handler(req,res){
  if(req.method!=='GET')return res.status(405).json({error:'Method not allowed'});
  const token=process.env.ARENA_API_TOKEN;
@@ -11,7 +12,7 @@ export default async function handler(req,res){
  const format=FORMATS.has(req.query.format)?req.query.format:'all';
  const topic=TOPICS.has(req.query.topic)?req.query.topic:'';
  const search=String(req.query.search||'').trim().slice(0,100).replace(/[\x00-\x1F]/g,' ');
- const terms=[topic,search].filter(Boolean).join(' ');
+ const terms=[TOPIC_TERMS[topic]||topic,search].filter(Boolean).join(' ');
  const url=new URL(API);
  url.searchParams.set('query',terms||'*');
  url.searchParams.set('sort','random');url.searchParams.set('seed',seed);
