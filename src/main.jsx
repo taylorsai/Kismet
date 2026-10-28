@@ -55,6 +55,7 @@ function App(){
  const [artWidth,setArtWidth]=useState(null);
  const [muted,setMuted]=useState(true);
  const videoRef=useRef(null);
+ const embedRef=useRef(null);
  const artRef=useRef(null);
  function measureArt(){const img=artRef.current;if(!img||!img.naturalWidth||!img.naturalHeight)return;const frame=img.closest('.art-button');if(!frame)return;const width=Math.min(frame.clientWidth,frame.clientHeight*(img.naturalWidth/img.naturalHeight));if(width>0)setArtWidth(Math.round(width))}
  useEffect(()=>{setArtWidth(null);const resize=()=>measureArt();window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize)},[active,view]);
@@ -101,6 +102,13 @@ function App(){
   const upcoming=current.blocks[next+1];if(upcoming?.image){const img=new Image();img.src=upcoming.image}
  }
  useEffect(()=>{const v=videoRef.current;if(!v)return;v.muted=muted;const promise=v.play();promise?.catch?.(()=>{});return()=>v.pause()},[item?.id,view,muted]);
+ useEffect(()=>{
+  const frame=embedRef.current;if(!frame||!item?.embedUrl)return;
+  const yt=item.embedUrl.includes('youtube-nocookie.com');
+  const message=yt?JSON.stringify({event:'command',func:muted?'mute':'unMute',args:[]}):{method:'setVolume',value:muted?0:1};
+  try{frame.contentWindow?.postMessage(message,yt?'https://www.youtube-nocookie.com':'https://player.vimeo.com')}catch{}
+ },[muted,item?.id]);
+
  const isSaved=!!item&&saved.some(x=>x.id===item.id);const source=item?.source||item?.arena;const arena=item?.arena||source;
  async function share(){if(!item)return;const url=source||arena;try{if(navigator.share)await navigator.share({title:item.title,url});else if(navigator.clipboard)await navigator.clipboard.writeText(url)}catch{}}
  // Native-feeling vertical wandering: flick up to see the next item, down to revisit.
@@ -112,7 +120,7 @@ function App(){
  function media(x,full=false){
   if(!x)return <div className="text-art"><p>Finding a discovery…</p></div>;
   if(x.directVideo)return <div className="video-frame"><video key={x.id} ref={videoRef} className="art media-video" src={x.directVideo} poster={x.image||undefined} autoPlay muted={muted} loop playsInline preload="metadata" onClick={e=>e.stopPropagation()}/><button className="sound-toggle" onClick={e=>{e.stopPropagation();setMuted(m=>!m)}} aria-label={muted?'Turn sound on':'Mute video'}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>}</button></div>;
-  if(x.embedUrl){const url=x.embedUrl+(x.embedUrl.includes('?')?'&':'?')+`autoplay=1&mute=${muted?1:0}&playsinline=1&controls=0&loop=1`;return <div className="video-frame"><iframe key={x.id+'-'+muted} className="media-embed" src={url} title={x.title} allow="autoplay; encrypted-media; picture-in-picture" referrerPolicy="strict-origin-when-cross-origin" tabIndex={-1}/><button className="sound-toggle" onClick={e=>{e.stopPropagation();setMuted(m=>!m)}} aria-label={muted?'Turn sound on':'Mute video'}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>}</button></div>}
+  if(x.embedUrl){const yt=x.embedUrl.includes('youtube-nocookie.com');const url=x.embedUrl+(x.embedUrl.includes('?')?'&':'?')+(yt?'autoplay=1&mute=1&playsinline=1&controls=0&enablejsapi=1':'autoplay=1&muted=1&playsinline=1&controls=0');return <div className="video-frame"><iframe key={x.id} ref={embedRef} className="media-embed" src={url} title={x.title} allow="autoplay; encrypted-media; picture-in-picture" referrerPolicy="strict-origin-when-cross-origin" tabIndex={-1}/><button className="sound-toggle" onClick={e=>{e.stopPropagation();setMuted(m=>!m)}} aria-label={muted?'Turn sound on':'Mute video'}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>}</button></div>}
   if(x.isArticle&&x.image)return <a className="article-art-link" href={x.source} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} aria-label={'Read original article: '+x.title}><img src={x.image} alt={x.title} draggable="false" className="art" ref={!full?artRef:undefined} onLoad={!full?measureArt:undefined}/><span className="article-cue">read article <ArrowUpRight size={13}/></span></a>;
   return x.image?<img src={x.image} alt={x.title} draggable="false" className="art" ref={!full?artRef:undefined} onLoad={!full?measureArt:undefined}/>:<div className={'text-art '+(full?'full-text':'')}><p>{x.text||x.title||'An unexpected encounter.'}</p>{x.isArticle&&<a href={x.source} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} className="article-text-link">read original article <ArrowUpRight size={14}/></a>}</div>
  } return <div className={'app '+view+' theme-'+theme} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchCancel} onWheel={onWheel} onMouseMove={view==='immersive'?reveal:undefined}>
