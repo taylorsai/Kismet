@@ -15,8 +15,8 @@ export default async function handler(req,res){
   }
   if(!chosen||!/^[a-zA-Z0-9_-]+$/.test(String(chosen)))return res.status(404).json({error:'This discovery has no accessible Are.na channel.'});
   const page=Math.max(1,Math.min(100,parseInt(req.query.page,10)||1));
-  const data=await arena(`/channels/${encodeURIComponent(chosen)}/contents?page=${page}&per=40`);
+  const data=await arena(`/channels/${encodeURIComponent(chosen)}/contents?page=${page}&per=20`);
   const blocks=Array.isArray(data)?data:(data.contents||data.blocks||[]);
-  res.status(200).json({data:blocks,slug:chosen,channel:data.title||title,hasMore:blocks.length>=40});
+  res.status(200).json({data:blocks,slug:chosen,channel:data.title||title,hasMore:blocks.length>=20});
  }catch(e){res.status(502).json({error:e.message||'Could not open channel'})}
 }
