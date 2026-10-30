@@ -27,34 +27,36 @@ function normalize(b){const kind=String(b.type||b.class||b.block_type||'Block').
 
 // Discovery subjects are search prompts, not verified classifications.
 const TOPIC_GROUPS=[
- {label:'Creative',topics:[['art','Art'],['design','Design'],['illustration','Illustration'],['typography','Typography'],['graphic-design','Graphic design'],['photography','Photography'],['animation','Animation']]},
- {label:'Culture',topics:[['music','Music'],['fashion','Fashion'],['film','Film'],['anime','Anime'],['memes','Memes'],['internet-culture','Internet culture']]},
- {label:'Places & things',topics:[['architecture','Architecture'],['interiors','Interiors'],['nature','Nature'],['objects','Objects'],['engineering','Engineering'],['technology','Technology']]},
- {label:'Strange & wonderful',topics:[['surreal','Surreal'],['experimental','Experimental'],['nostalgia','Nostalgia'],['web-art','Web art'],['archives','Archives'],['oddities','Oddities']]},
- {label:'Mature',topics:[['nsfw','NSFW (opt-in)']]}
+ {label:'Explore',topics:[['art','Art'],['design','Design'],['photography','Photography'],['fashion','Fashion'],['architecture','Architecture'],['technology','Technology'],['music','Music'],['animation','Animation'],['memes','Memes']]},
+ {label:'Mature',topics:[['nsfw','NSFW'],['glamour','After Dark']]}
 ];
+const MATURE_TOPICS=new Set(['nsfw','glamour']);
+function readPrefs(){try{const p=JSON.parse(localStorage.getItem('wren-discovery-prefs-v1')||'{}');return {format:['all','images','gifs','videos','articles'].includes(p.format)?p.format:'all',topic:TOPIC_GROUPS.flatMap(g=>g.topics.map(x=>x[0])).includes(p.topic)?p.topic:'',search:typeof p.search==='string'?p.search.slice(0,100):'',mature:p.mature===true}}catch{return {format:'all',topic:'',search:'',mature:false}}}
 function shuffleDemo(){return [...demo].sort(()=>Math.random()-.5).map((x,i)=>({...x,id:x.id+'-'+Date.now()+'-'+i}))}
 function readSaved(){try{const fresh=localStorage.getItem('wren-saves');return JSON.parse(fresh||localStorage.getItem('kismet-saves')||'[]')}catch{return []}}
 function App(){
  const[items,setItems]=useState([]),[mode,setMode]=useState('demo'),[saved,setSaved]=useState(readSaved),[active,setActive]=useState(0),[view,setView]=useState(()=>(localStorage.getItem('wren-view')||localStorage.getItem('kismet-view'))==='immersive'?'immersive':'focused'),[panel,setPanel]=useState(''),[loading,setLoading]=useState(false),[error,setError]=useState(''),[controls,setControls]=useState(true);
- const [format,setFormat]=useState('all'),[topic,setTopic]=useState(''),[searchTerm,setSearchTerm]=useState(''),[draftSearch,setDraftSearch]=useState('');
- const filtersRef=useRef({format:'all',topic:'',search:''});
+ const [initialPrefs]=useState(readPrefs);
+ const [format,setFormat]=useState(initialPrefs.format),[topic,setTopic]=useState(initialPrefs.mature?initialPrefs.topic:(MATURE_TOPICS.has(initialPrefs.topic)?'':initialPrefs.topic)),[searchTerm,setSearchTerm]=useState(initialPrefs.search),[draftSearch,setDraftSearch]=useState(initialPrefs.search),[mature,setMature]=useState(initialPrefs.mature);
+ const filtersRef=useRef({format:initialPrefs.format,topic:initialPrefs.mature?initialPrefs.topic:(MATURE_TOPICS.has(initialPrefs.topic)?'':initialPrefs.topic),search:initialPrefs.search,mature:initialPrefs.mature});
  const[theme,setTheme]=useState(()=>{try{return (localStorage.getItem('wren-theme')||localStorage.getItem('kismet-theme'))==='light'?'light':'dark'}catch{return 'dark'}}),[stacks,setStacks]=useState({});
  const stacksRef=useRef({}),stackBusy=useRef(new Set()),stackPosition=useRef({});
- const busy=useRef(false),seed=useRef(Math.floor(Math.random()*1e9)),page=useRef(1),generation=useRef(0),modeRef=useRef('demo'),itemsRef=useRef(items),activeRef=useRef(0),touch=useRef(null),hideTimer=useRef(null),lastGesture=useRef(0);
- useEffect(()=>{itemsRef.current=items;items.slice(Math.max(0,activeRef.current),activeRef.current+7).forEach(x=>{if(x.image){const img=new Image();img.src=x.image}})},[items,active]);useEffect(()=>{activeRef.current=active},[active]);useEffect(()=>{localStorage.setItem('wren-saves',JSON.stringify(saved))},[saved]);useEffect(()=>{localStorage.setItem('wren-view',view)},[view]);useEffect(()=>{localStorage.setItem('wren-theme',theme)},[theme]);
+ const abortRef=useRef(null),busy=useRef(false),seed=useRef(Math.floor(Math.random()*1e9)),page=useRef(1),generation=useRef(0),modeRef=useRef('demo'),itemsRef=useRef(items),activeRef=useRef(0),touch=useRef(null),hideTimer=useRef(null),lastGesture=useRef(0);
+ useEffect(()=>{itemsRef.current=items;items.slice(Math.max(0,activeRef.current),activeRef.current+7).forEach(x=>{if(x.image){const img=new Image();img.src=x.image}})},[items,active]);useEffect(()=>{activeRef.current=active},[active]);useEffect(()=>{localStorage.setItem('wren-saves',JSON.stringify(saved))},[saved]);useEffect(()=>{localStorage.setItem('wren-view',view)},[view]);useEffect(()=>{localStorage.setItem('wren-theme',theme)},[theme]);useEffect(()=>{try{localStorage.setItem('wren-discovery-prefs-v1',JSON.stringify({format,topic,search:searchTerm,mature}))}catch{}},[format,topic,searchTerm,mature]);
  const load=useCallback(async(s,p,replace=false)=>{
   if(busy.current&&!replace)return;
+  if(replace)abortRef.current?.abort();
+  const controller=new AbortController();abortRef.current=controller;
   const gen=replace?++generation.current:generation.current;
   busy.current=true;setLoading(true);setError('');
   try{
    const selected=filtersRef.current.format;
    let next=[],lastPage=p-1;
    // A search page may contain zero recognized videos/GIFs. Keep looking before declaring failure.
-   for(let offset=0;offset<5;offset++){
+   for(let offset=0;offset<3;offset++){
     if(gen!==generation.current)return;
     const current=p+offset;
-    const r=await fetch(`/api/discover?seed=${s}&page=${current}&format=${encodeURIComponent(selected)}&topic=${encodeURIComponent(filtersRef.current.topic)}&search=${encodeURIComponent(filtersRef.current.search)}`);
+    const r=await fetch(`/api/discover?seed=${s}&page=${current}&format=${encodeURIComponent(selected)}&topic=${encodeURIComponent(filtersRef.current.topic)}&search=${encodeURIComponent(filtersRef.current.search)}&mature=${filtersRef.current.mature?'1':'0'}`,{signal:controller.signal});
     const data=await r.json();
     if(!r.ok)throw Error(data.code==='NO_TOKEN'?'Add ARENA_API_TOKEN to enable live discoveries.':data.code==='PREMIUM_REQUIRED'?'Are.na requires Premium for randomized search.':data.error||'Could not load discoveries');
     lastPage=current;
@@ -67,7 +69,7 @@ function App(){
      return true;
     });
     next.push(...batch.filter(x=>!next.some(y=>y.id===x.id)));
-    if(next.length>=8||!data.data?.length)break;
+    if(next.length>=6||!data.data?.length)break;
    }
    if(gen!==generation.current)return;
    page.current=lastPage;
@@ -78,18 +80,19 @@ function App(){
    }
    setItems(old=>replace?next:[...old,...next.filter(x=>!old.some(y=>y.id===x.id))]);
    setMode('live');modeRef.current='live';
-  }catch(e){if(gen!==generation.current)return;setError(e.message);if(replace)setItems([])}
-  finally{if(gen===generation.current){busy.current=false;setLoading(false)}}
+  }catch(e){if(gen!==generation.current||e.name==='AbortError')return;setError(e.message);if(replace)setItems([])}
+  finally{if(gen===generation.current){busy.current=false;setLoading(false);if(abortRef.current===controller)abortRef.current=null}}
  },[]);
  useEffect(()=>{load(seed.current,1,true)},[load]);
  useEffect(()=>{if(mode==='live'&&active>=items.length-4&&!loading)load(seed.current,page.current+1)},[active,items.length,mode,loading,load]);
  function applyFilters(nextFormat=format,nextTopic=topic,nextSearch=draftSearch){
-  const query=nextSearch.trim();filtersRef.current={format:nextFormat,topic:nextTopic,search:query};
+  const query=nextSearch.trim();if(!mature&&MATURE_TOPICS.has(nextTopic))nextTopic='';filtersRef.current={format:nextFormat,topic:nextTopic,search:query,mature};
   setFormat(nextFormat);setTopic(nextTopic);setSearchTerm(query);setDraftSearch(query);
   seed.current=Math.floor(Math.random()*1e9);page.current=1;setActive(0);activeRef.current=0;
   stacksRef.current={};stackPosition.current={};stackBusy.current.clear();setStacks({});setPanel('');
   load(seed.current,1,true);
  }
+ function changeMature(enabled){setMature(enabled);const nextTopic=!enabled&&MATURE_TOPICS.has(topic)?'':topic;filtersRef.current={...filtersRef.current,topic:nextTopic,mature:enabled};setTopic(nextTopic);seed.current=Math.floor(Math.random()*1e9);page.current=1;setActive(0);activeRef.current=0;stacksRef.current={};stackPosition.current={};setStacks({});load(seed.current,1,true)}
  function newPath(){stacksRef.current={};stackPosition.current={};stackBusy.current.clear();setStacks({});seed.current=Math.floor(Math.random()*1e9);page.current=1;setActive(0);activeRef.current=0;setPanel('');setError('');if(modeRef.current==='live')load(seed.current,1,true);else{setItems([]);load(seed.current,1,true)}}
  const [artWidth,setArtWidth]=useState(null);
  const [muted,setMuted]=useState(true);
@@ -140,7 +143,7 @@ function App(){
   setStacks({...stacksRef.current});
   const upcoming=current.blocks[next+1];if(upcoming?.image){const img=new Image();img.src=upcoming.image}
  }
- useEffect(()=>{const v=videoRef.current;if(!v)return;v.muted=muted;const promise=v.play();promise?.catch?.(()=>{});return()=>v.pause()},[item?.id,view,muted]);
+ useEffect(()=>{const v=videoRef.current;if(!v)return;v.muted=muted;v.play()?.catch?.(()=>{});return()=>v.pause()},[item?.id,view]);useEffect(()=>{if(videoRef.current)videoRef.current.muted=muted},[muted]);
  useEffect(()=>{
   const frame=embedRef.current;if(!frame||!item?.embedUrl)return;
   const yt=item.embedUrl.includes('youtube-nocookie.com');
@@ -159,7 +162,7 @@ function App(){
  function media(x,full=false){
   if(!x)return <div className="text-art"><p>Finding a discovery…</p></div>;
   if(x.directVideo)return <div className="video-frame"><video key={x.id} ref={videoRef} className="art media-video" src={x.directVideo} poster={x.image||undefined} autoPlay muted={muted} loop playsInline preload="metadata" onClick={e=>e.stopPropagation()}/><button className="sound-toggle" onClick={e=>{e.stopPropagation();setMuted(m=>!m)}} aria-label={muted?'Turn sound on':'Mute video'}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>}</button></div>;
-  if(x.embedUrl){const yt=x.embedUrl.includes('youtube-nocookie.com');const url=x.embedUrl+(x.embedUrl.includes('?')?'&':'?')+(yt?'autoplay=1&mute=1&playsinline=1&controls=0&enablejsapi=1':'autoplay=1&muted=1&playsinline=1&controls=0');return <div className="video-frame"><iframe key={x.id} ref={embedRef} className="media-embed" src={url} title={x.title} allow="autoplay; encrypted-media; picture-in-picture" referrerPolicy="strict-origin-when-cross-origin" tabIndex={-1}/><button className="sound-toggle" onClick={e=>{e.stopPropagation();setMuted(m=>!m)}} aria-label={muted?'Turn sound on':'Mute video'}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>}</button></div>}
+  if(x.embedUrl){const yt=x.embedUrl.includes('youtube-nocookie.com');const url=x.embedUrl+(x.embedUrl.includes('?')?'&':'?')+(yt?'autoplay=1&mute=1&playsinline=1&controls=1&enablejsapi=1':'autoplay=1&muted=1&playsinline=1&controls=1');return <div className="video-frame"><iframe key={x.id} ref={embedRef} className="media-embed" src={url} title={x.title} allow="autoplay; encrypted-media; picture-in-picture" referrerPolicy="strict-origin-when-cross-origin" /><button className="sound-toggle" onClick={e=>{e.stopPropagation();setMuted(m=>!m)}} aria-label={muted?'Turn sound on':'Mute video'}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>}</button></div>}
   if(x.isArticle&&x.image)return <a className="article-art-link" href={x.source} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} aria-label={'Read original article: '+x.title}><img src={x.image} alt={x.title} draggable="false" className="art" ref={!full?artRef:undefined} onLoad={!full?measureArt:undefined}/><span className="article-cue">read article <ArrowUpRight size={13}/></span></a>;
   return x.image?<img src={x.image} alt={x.title} draggable="false" className="art" ref={!full?artRef:undefined} onLoad={!full?measureArt:undefined}/>:<div className={'text-art '+(full?'full-text':'')}><p>{x.text||x.title||'An unexpected encounter.'}</p>{x.isArticle&&<a href={x.source} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} className="article-text-link">read original article <ArrowUpRight size={14}/></a>}</div>
  } return <div className={'app '+view+' theme-'+theme} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchCancel} onWheel={onWheel} onMouseMove={view==='immersive'?reveal:undefined}>
@@ -168,11 +171,12 @@ function App(){
  {panel&&<div className="overlay" onClick={()=>setPanel('')}><section className="drawer" onClick={e=>e.stopPropagation()}><div className="drawer-head"><strong>{panel==='saved'?'kept encounters.':panel==='filters'?'discover.':'wren.'}</strong><button className="bare" onClick={()=>setPanel('')} aria-label="Close"><X/></button></div>{panel==='filters'?<div className="filter-panel">
  <p>Choose what to stumble upon. Your channel swipes stay unrestricted.</p>
  <label>MEDIA TYPE</label><div className="filter-chips">{[['all','Everything'],['images','Images'],['gifs','GIFs'],['videos','Videos'],['articles','Articles']].map(([v,n])=><button key={v} className={format===v?'selected':''} onClick={()=>setFormat(v)}>{n}</button>)}</div>
- <label>EXPLORE</label><div className="filter-chips"><button className={topic===''?'selected':''} onClick={()=>setTopic('')}>Anything</button></div>{TOPIC_GROUPS.map(group=><div className="topic-group" key={group.label}><div className="topic-group-label">{group.label}</div><div className="filter-chips">{group.topics.map(([v,n])=><button key={v} className={topic===v?'selected':''} onClick={()=>setTopic(v)}>{n}</button>)}</div></div>)}
+ <label>EXPLORE</label><div className="filter-chips"><button className={topic===''?'selected':''} onClick={()=>setTopic('')}>Anything</button></div>{TOPIC_GROUPS.filter(group=>group.label!=='Mature'||mature).map(group=><div className="topic-group" key={group.label}><div className="topic-group-label">{group.label}</div><div className="filter-chips">{group.topics.map(([v,n])=><button key={v} className={topic===v?'selected':''} onClick={()=>setTopic(v)}>{n}</button>)}</div></div>)}
+ <div className="mature-control"><span><strong>Mature content</strong><small>Off by default · may include nudity</small></span><button type="button" role="switch" aria-checked={mature} className={'mature-switch '+(mature?'enabled':'')} onClick={()=>changeMature(!mature)}>{mature?'on':'off'}</button></div>
  <label htmlFor="discovery-query">SEARCH</label><input id="discovery-query" className="filter-input" value={draftSearch} onChange={e=>setDraftSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')applyFilters()}} placeholder="abandoned websites, anime, typography…" maxLength={100}/>
  <button className="filter-apply" onClick={()=>applyFilters()}>explore <ArrowUpRight size={15}/></button>
  <button className="filter-clear" onClick={()=>applyFilters('all','','')}>clear filters</button>
- <p className="drawer-note">Topics guide Are.na keyword search; they are not guaranteed tags or content ratings. Choose one subject and optionally add your own words. NSFW is opt-in but not age-verified or reliably filtered.</p>
+ <p className="drawer-note">Topics guide Are.na keyword search; they are not guaranteed tags or content ratings. Choose one subject and optionally add your own words. Mature content is off by default. Are.na metadata filtering cannot guarantee that every unexpected nude image will be excluded.</p>
  </div>:panel==='saved'?<>{saved.length===0?<p>Nothing saved yet. Keep something unexpected.</p>:<div className="saved-grid">{saved.map(x=><div className="saved-card" key={x.id}><a href={x.source||x.arena} target="_blank" rel="noopener noreferrer">{x.image?<img src={x.image} alt={x.title}/>:<span>{x.title}</span>}</a><button onClick={()=>save(x)} title="Remove saved"><X size={14}/></button></div>)}</div>}<p className="drawer-note">Saved in this browser for now. Cloud libraries and private tester accounts are next.</p></>:<><p>A feed of chance encounters. Nothing is ranked for you. No recommendations. Just discoveries.</p><p>Scroll or swipe up to discover something new. Swipe down to revisit previous discoveries. Switch between focused and immersive viewing whenever you like.</p><p>Original sources open in a new tab when an external website cannot be displayed inside wren.</p><p className="drawer-note">{mode==='live'?'Connected to public Are.na discoveries.':'Showing sample content.'}</p></>}</section></div>}
  </div>
 }

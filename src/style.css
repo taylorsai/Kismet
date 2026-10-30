@@ -93,3 +93,10 @@
 
 /* wren 0.7 — grouped discovery subjects */
 .topic-group{margin-top:17px}.topic-group-label{font-size:10px;letter-spacing:.13em;text-transform:uppercase;opacity:.55;margin:0 0 9px}.topic-group .filter-chips{margin-bottom:0}
+
+/* 0.8: allow embedded player controls to receive taps; do not alter swipe gesture handlers. */
+.media-embed{pointer-events:auto}
+.video-frame{isolation:isolate}
+.mature-control{display:flex;align-items:center;justify-content:space-between;gap:15px;border-top:1px solid #53605255;padding:15px 0;margin-top:12px}
+.mature-control span{display:flex;flex-direction:column;gap:5px}.mature-control strong{font-size:12px}.mature-control small{font-size:10px;opacity:.65}
+.mature-switch{border:1px solid currentColor;background:transparent;color:inherit;border-radius:22px;padding:8px 15px;min-width:58px;font-size:11px}.mature-switch.enabled{background:#b4d67a;color:#141914;border-color:#b4d67a}
