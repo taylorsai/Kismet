@@ -129,7 +129,7 @@ function App(){
      return true;
     });
     next.push(...batch.filter(x=>!next.some(y=>y.id===x.id)));
-    if(next.length>=6||!data.data?.length)break;
+    if(next.length>=16||!data.data?.length)break;
    }
    if(gen!==generation.current)return;
    page.current=lastPage;
@@ -144,7 +144,7 @@ function App(){
   finally{if(gen===generation.current){busy.current=false;setLoading(false);if(abortRef.current===controller)abortRef.current=null}}
  },[]);
  useEffect(()=>{load(seed.current,1,true)},[load]);
- useEffect(()=>{if(mode==='live'&&active>=items.length-4&&!loading)load(seed.current,page.current+1)},[active,items.length,mode,loading,load]);
+ useEffect(()=>{if(mode==='live'&&items.length-active<=18&&!loading)load(seed.current,page.current+1)},[active,items.length,mode,loading,load]);
  function applyFilters(nextFormat=format,nextTopic=topic,nextSearch=draftSearch){
   const query=nextSearch.trim();if(!mature&&MATURE_TOPICS.has(nextTopic))nextTopic='';filtersRef.current={format:nextFormat,topic:nextTopic,search:query,mature};
   setFormat(nextFormat);setTopic(nextTopic);setSearchTerm(query);setDraftSearch(query);
@@ -194,7 +194,7 @@ function App(){
    const result=await response.json();
    if(!response.ok)throw Error(result.error||'Channel unavailable');
    const normalized=(result.data||[]).map(normalize).filter(x=>x.id&&(x.image||x.text||x.source));
-   const unique=[baseItem,...normalized.filter(x=>x.id!==baseItem.id)].filter(x=>filtersRef.current.mature||x.wrenModeration==='safe').slice(0,20);
+   const unique=[baseItem,...normalized.filter(x=>x.id!==baseItem.id)].filter(x=>filtersRef.current.mature||x.wrenModeration!=='explicit').slice(0,20);
    if(unique.length<2)throw Error('No other channel blocks available');
    const value={blocks:unique,channel:result.channel||baseItem.channel};
    stacksRef.current={...stacksRef.current,[baseItem.id]:value};setStacks(stacksRef.current);
@@ -248,7 +248,7 @@ function App(){
  <label htmlFor="discovery-query">SEARCH</label><input id="discovery-query" className="filter-input" value={draftSearch} onChange={e=>setDraftSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')applyFilters()}} placeholder="abandoned websites, anime, typography…" maxLength={100}/>
  <button className="filter-apply" onClick={()=>applyFilters()}>explore <ArrowUpRight size={15}/></button>
  <button className="filter-clear" onClick={()=>applyFilters('all','','')}>clear filters</button>
- <p className="drawer-note">Topics guide Are.na keyword search; they are not guaranteed tags or content ratings. Choose one subject and optionally add your own words. Mature content is off by default. Visual checks require a configured moderation service. Unverified media are hidden by default; video checks currently cover previews only.</p>
+ <p className="drawer-note">Topics guide Are.na keyword search; they are not guaranteed tags or content ratings. Choose one subject and optionally add your own words. Mature content is off by default. Visual checks require a configured moderation service. Unverified media may appear when moderation is unavailable; video checks currently cover previews only.</p>
  </div>:panel==='account'?<div className="account-panel">{session?<><p>Signed in as {session.user.email}</p><button className="filter-apply" onClick={()=>{setPanel('');setArchiveOpen(true)}}>open archive</button><form onSubmit={setAccountPassword}><label htmlFor="wren-new-password">SET OR CHANGE PASSWORD</label><input id="wren-new-password" className="filter-input" type="password" minLength={6} required value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="New password (6+ characters)"/><button className="filter-apply" type="submit">save password</button></form><button className="filter-clear" onClick={logout}>sign out</button><p role="status">{authMessage}</p></>:<><p>Sign in to keep your discoveries across devices. We'll import any saves from this browser.</p><div className="auth-tabs"><button onClick={()=>{setAuthMode('signin');setAuthMessage('')}}>sign in</button><button onClick={()=>{setAuthMode('signup');setAuthMessage('')}}>create account</button></div><form onSubmit={requestLogin}><label htmlFor="wren-email">EMAIL</label><input className="filter-input" id="wren-email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/>{authMode!=='reset'&&<><label htmlFor="wren-password">PASSWORD</label><input className="filter-input" id="wren-password" type="password" minLength={6} required value={password} onChange={e=>setPassword(e.target.value)} autoComplete={authMode==='signup'?'new-password':'current-password'}/></>}<button className="filter-apply" type="submit" disabled={!supabase}>{authMode==='signup'?'create account':authMode==='reset'?'send reset email':'sign in'}</button></form><button className="filter-clear" onClick={()=>{setAuthMode(authMode==='reset'?'signin':'reset');setAuthMessage('')}}>{authMode==='reset'?'back to sign in':'forgot password?'}</button><p role="status">{authMessage}</p></>}{cloudMessage&&<p className="drawer-note">{cloudMessage}</p>}</div>:<><p>A feed of chance encounters. Nothing is ranked for you. No recommendations. Just discoveries.</p><p>Scroll or swipe up to discover something new. Swipe down to revisit previous discoveries. Tap an image to enlarge it; swipe right to return.</p><p>Original sources open in a new tab when an external website cannot be displayed inside wren.</p><p className="drawer-note">{mode==='live'?'Connected to public Are.na discoveries.':'Showing sample content.'}</p></>}</section></div>}
  </div>
 }
