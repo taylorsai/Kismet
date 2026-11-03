@@ -130,3 +130,21 @@
 /* Minimal archive title; navigation is by right swipe or Escape. */
 .archive-head{justify-content:center;padding:16px 4px 14px}
 .archive-head strong{font-size:15px;font-weight:500;letter-spacing:.015em}
+
+/* wren. 1.3: visual moderation and password sign-in */
+.wren-media-gate{position:relative;isolation:isolate;width:100%;height:100%;min-height:220px;display:grid;place-items:center;overflow:hidden;background:#222}
+.wren-media-gate-backdrop{position:absolute;inset:-35px;background-position:center;background-size:cover;filter:blur(35px) brightness(.22);transform:scale(1.15);pointer-events:none}
+.wren-media-gate>button,.wren-content-warning{position:relative;z-index:3;background:#181818e8;color:#fff;border:1px solid #ffffff55;padding:14px 20px;font:inherit;font-size:12px;max-width:85%;line-height:1.6;cursor:pointer}
+.archive-media{position:relative;overflow:hidden}.archive-media>.wren-media-visible,.archive-media>.wren-media-obscured{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.archive-media>.wren-media-obscured{filter:blur(35px) brightness(.28);pointer-events:none}.archive-media>.wren-content-warning{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.archive-tile .wren-blurred{filter:blur(18px) brightness(.3);transform:scale(1.1)}
+.auth-tabs{display:flex;gap:16px;margin-bottom:15px}.auth-tabs button{font:inherit;color:inherit;background:none;border:0;text-decoration:underline;font-size:12px}
+.account-panel form{margin-bottom:14px}.account-panel .filter-clear{margin:12px 0}
+
+/* wren. 1.3: mouse controls without changing touch gestures */
+.desktop-channel-controls{display:flex;align-items:center;justify-content:center;gap:8px}
+.desktop-channel-controls>button,.desktop-close{display:none}
+@media(hover:hover) and (pointer:fine){
+ .desktop-channel-controls>button{display:grid;place-items:center;border:0;background:none;color:var(--lime);font:inherit;font-size:23px;line-height:1;padding:3px 8px}
+ .desktop-close{display:grid;place-items:center;position:absolute;right:18px;top:13px;border:0;background:none;color:inherit;padding:7px}
+ .immersive-header-actions .desktop-close{position:static}
+}

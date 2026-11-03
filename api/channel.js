@@ -1,3 +1,4 @@
+import {moderateBatch} from './moderation.js';
 // Server-side Are.na channel discovery. Keep ARENA_API_TOKEN in Vercel environment variables.
 const BASE='https://api.are.na/v2';
 async function arena(path){const token=process.env.ARENA_API_TOKEN;const r=await fetch(BASE+path,{headers:token?{Authorization:`Bearer ${token}`}:{}});if(!r.ok)throw new Error(`Are.na returned ${r.status}`);return r.json()}
@@ -17,6 +18,6 @@ export default async function handler(req,res){
   const page=Math.max(1,Math.min(100,parseInt(req.query.page,10)||1));
   const data=await arena(`/channels/${encodeURIComponent(chosen)}/contents?page=${page}&per=20`);
   const blocks=Array.isArray(data)?data:(data.contents||data.blocks||[]);
-  res.status(200).json({data:blocks,slug:chosen,channel:data.title||title,hasMore:blocks.length>=20});
+  res.status(200).json({data:await moderateBatch(blocks,{mature:req.query.mature==='1'}),slug:chosen,channel:data.title||title,hasMore:blocks.length>=20});
  }catch(e){res.status(502).json({error:e.message||'Could not open channel'})}
 }

@@ -1,3 +1,4 @@
+import {moderateBatch} from './moderation.js';
 // wren 0.7 — filtered random discovery. ARENA_API_TOKEN stays server-side.
 const API='https://api.are.na/v3/search';
 const FORMATS=new Set(['all','images','gifs','videos','articles']);
@@ -20,7 +21,7 @@ export default async function handler(req,res){
  const url=new URL(API);
  url.searchParams.set('query',terms||'*');
  url.searchParams.set('sort','random');url.searchParams.set('seed',seed);
- url.searchParams.set('page',String(page));url.searchParams.set('per','24');
+ url.searchParams.set('page',String(page));url.searchParams.set('per','12');
  if(format==='images')url.searchParams.set('type','Image');
  else if(format==='gifs')url.searchParams.set('type','Block')
  else if(format==='videos')url.searchParams.set('type','Block');
@@ -39,7 +40,7 @@ export default async function handler(req,res){
     u.searchParams.set('sort','random');
     u.searchParams.set('seed',String((Number(seed)+i*7919+page*97)%2147483647));
     u.searchParams.set('page',String(1+Math.floor((page-1)/3)%5));
-    u.searchParams.set('per','24');
+    u.searchParams.set('per','12');
     u.searchParams.set('type',format==='images'?'Image':format==='articles'?'Link':'Block');
     const r=await fetch(u,{headers:{Authorization:`Bearer ${token}`,Accept:'application/json'}});
     if(!r.ok){let message='Are.na search failed';try{const d=await r.json();message=d.details?.message||d.message||d.error||message}catch{}throw Object.assign(new Error(message),{status:r.status})}
@@ -52,12 +53,12 @@ export default async function handler(req,res){
    let state=(Number(seed)+page*2654435761)>>>0;
    for(let i=combined.length-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;const j=state%(i+1);[combined[i],combined[j]]=[combined[j],combined[i]]}
    res.setHeader('Cache-Control','public, s-maxage=45, stale-while-revalidate=120');
-   return res.status(200).json({data:combined,meta:{},format,topic,search});
+   return res.status(200).json({data:await moderateBatch(combined,{mature}),meta:{},format,topic,search});
   }
   const upstream=await fetch(url,{headers:{Authorization:`Bearer ${token}`,Accept:'application/json'}});
   if(!upstream.ok){let message='Are.na search failed';try{const d=await upstream.json();message=d.details?.message||d.message||d.error||message}catch{}return res.status(upstream.status).json({error:message,code:upstream.status===403?'PREMIUM_REQUIRED':'UPSTREAM_ERROR'})}
   const data=await upstream.json();res.setHeader('Cache-Control','public, s-maxage=45, stale-while-revalidate=120');
   const safe=(data.data||[]).filter(item=>mature||!/(?:\bnsfw\b|\bnud(?:e|ity|ism)\b|\berotic\b|\bporn(?:ography)?\b|\bboudoir\b|\bpinup\b|\bplayboy\b|\bsexually explicit\b)/i.test([item.title,item.generated_title,item.description?.plain,item.description?.markdown,item.channel?.title,...(item.connections||[]).map(c=>c.channel?.title)].filter(Boolean).join(' ')));
-  return res.status(200).json({data:safe,meta:data.meta||{},format,topic,search});
+  return res.status(200).json({data:await moderateBatch(safe,{mature}),meta:data.meta||{},format,topic,search});
  }catch(e){return res.status(e.status||502).json({error:e.status?e.message:'Could not connect to Are.na',code:e.status===403?'PREMIUM_REQUIRED':e.status?'UPSTREAM_ERROR':'NETWORK_ERROR'})}
 }
